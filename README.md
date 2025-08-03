@@ -137,13 +137,13 @@ Uses `setting.json` for pattern matching:
 [
   {
     "name": "24",
-    "player": "",
+    "player": "your_user_name",
     "pattern": "^\\d+_(\\d{4})_.*\\.kif$",
     "output_path": "/path/to/output/24_games"
   },
   {
     "name": "wars",
-    "player": "", 
+    "player": "your_user_name", 
     "pattern": "^.*?(\\d{8})_.*?\\.kif$",
     "output_path": "/path/to/output/wars_games"
   }
@@ -190,13 +190,13 @@ Advanced KIF file analysis tool that extracts game information, processes evalua
 
 ##### 1. Wars Format (`wars`)
 - **File Pattern**: `^.*?(\\d{8})_.*?\\.kif$`
-- **Player**: Love_Kapibara
+- **Player**: your_user_name
 - **Game Modes**: 10m (10分), 3m (3分), sp (スプリント), 10s (10秒)
 - **Extracted Data**: mode, player position, win/loss, evaluation loss, strategies, castles
 
 ##### 2. 24-Hour Format (`24`)
 - **File Pattern**: `^\\d+_(\\d{4})_.*\\.kif$`
-- **Player**: komasan88
+- **Player**: your_user_name
 - **Game Modes**: hy (早指し), hy2, etc.
 - **Extracted Data**: mode, player position, win/loss, evaluation loss, player ratings
 
@@ -240,7 +240,7 @@ Central configuration file for pattern matching and output routing:
 [
   {
     "name": "24",                    // Configuration identifier
-    "player": "",           // Target player name
+    "player": "your_user_name",           // Target player name
     "pattern": "^\\d+_(\\d{4})_.*\\.kif$",  // Regex pattern for filename matching
     "output_path": "/path/to/output", // Directory for organized files
     "sql_file_path": "/path/to/sql"   // Target SQL file for database updates
@@ -300,7 +300,7 @@ CREATE TABLE IF NOT EXISTS shogi_eval_loss_for_24 (
 ./organize_kif
 
 # 2. Process organized files and update database
-./update_sql /home/takanori/C-_utils/Evaluation
+./update_sql /home/User/C-_utils/Evaluation/input
 
 # 3. Manage file references with level system
 ./file_manager
