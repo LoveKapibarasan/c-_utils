@@ -66,12 +66,12 @@ void createEntry(const std::string& date, int level, const std::string& path) {
     std::cout << "Entry created.\n";
 }
 
-void updateLevel(const std::string& path) {
+void updateLevel(const std::string& path, int newLevel) {
     auto entries = loadEntries();
     bool found = false;
     for (auto& e : entries) {
         if (e.path == path) {
-            e.level = 0;
+            e.level = newLevel;
             found = true;
             break;
         }

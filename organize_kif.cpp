@@ -2,15 +2,25 @@
 #include <fstream>
 #include <filesystem>
 #include <regex>
-#include <nlohmann/json.hpp>
+#include <optional>
+#include "json.hpp"
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-const std::string INPUT_FOLDER = "kif_input";
+const std::string INPUT_FOLDER = "Evaluation/input";
 const std::string SETTING_FILE = "setting.json";
 
-
+// Load settings from JSON file
+json loadSettings() {
+    std::ifstream file(SETTING_FILE);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open " + SETTING_FILE);
+    }
+    json settings;
+    file >> settings;
+    return settings;
+}
 
 // Find setting that matches a filename
 std::optional<json> findSetting(const std::string& filename, const json& settings) {
