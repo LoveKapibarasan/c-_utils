@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
+#include <optional>
 
 namespace fs = std::filesystem;
 
@@ -23,12 +24,18 @@ std::vector<Entry> loadEntries() {
     std::ifstream file(dataFile);
     std::string line;
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
         std::stringstream ss(line);
         std::string date, levelStr, path;
-        std::getline(ss, date, ',');
-        std::getline(ss, levelStr, ',');
-        std::getline(ss, path);
-        entries.push_back({date, std::stoi(levelStr), path});
+        if (!std::getline(ss, date, ',')) continue;
+        if (!std::getline(ss, levelStr, ',')) continue;
+        if (!std::getline(ss, path)) continue;
+        try {
+            int level = std::stoi(levelStr);
+            entries.push_back({date, level, path});
+        } catch (...) {
+            continue;
+        }
     }
     return entries;
 }
@@ -61,26 +68,54 @@ int daysBetween(const std::string& date1, const std::string& date2) {
 
 void createEntry(const std::string& date, int level, const std::string& path) {
     auto entries = loadEntries();
-    entries.push_back({date, level, path});
+    std::vector<std::string> targets;
+    if (fs::is_directory(path)) {
+        for (const auto& entry : fs::directory_iterator(path)) {
+            if (fs::is_regular_file(entry.path())) {
+                targets.push_back(entry.path().string());
+            }
+        }
+    } else {
+        targets.push_back(path);
+    }
+    for (const auto& tpath : targets) {
+        entries.push_back({date, level, tpath});
+    }
     saveEntries(entries);
-    std::cout << "Entry created.\n";
+    std::cout << "Entry/entries created.\n";
 }
 
-void updateLevel(const std::string& path, int newLevel) {
+void updateLevel(const std::string& path, std::optional<int> newLevelOpt) {
     auto entries = loadEntries();
     bool found = false;
-    for (auto& e : entries) {
-        if (e.path == path) {
-            e.level = newLevel;
-            found = true;
-            break;
+    std::vector<std::string> targets;
+    if (fs::is_directory(path)) {
+        // Collect all file paths in the directory (non-recursive)
+        for (const auto& entry : fs::directory_iterator(path)) {
+            if (fs::is_regular_file(entry.path())) {
+                targets.push_back(entry.path().string());
+            }
+        }
+    } else {
+        targets.push_back(path);
+    }
+    for (const auto& tpath : targets) {
+        for (auto& e : entries) {
+            if (e.path == tpath) {
+                if (newLevelOpt.has_value()) {
+                    e.level = newLevelOpt.value();
+                } else {
+                    e.level += 1;
+                }
+                found = true;
+            }
         }
     }
     if (found) {
         saveEntries(entries);
-        std::cout << "Level updated.\n";
+        std::cout << "Level(s) updated.\n";
     } else {
-        std::cerr << "Path not found.\n";
+        std::cerr << "Path(s) not found in entries.\n";
     }
 }
 
@@ -99,16 +134,21 @@ void checkAndOpen() {
     for (const auto& e : entries) {
         int limit = std::pow(2, e.level);
         if (daysBetween(e.date, today) >= limit) {
-            std::cout << "Opening: " << e.path << "\n";
-            openInExplorer(e.path);
+            fs::path p(e.path);
+            fs::path dir = p.parent_path();
+            std::cout << "Opening folder: " << dir << "\n";
+            openInExplorer(dir.string());
         }
     }
 }
 
 void printUsage() {
     std::cout << "Usage:\n"
-              << "  create YYYY-MM-DD LEVEL /path/to/file\n"
-              << "  update /path/to/file NEW_LEVEL\n"
+              << "  create YYYY-MM-DD LEVEL /path/to/file_or_folder\n"
+              << "  create LEVEL /path/to/file_or_folder   (date = today)\n"
+              << "  create /path/to/file_or_folder         (date = today, level = 0)\n"
+              << "  update /path/to/file_or_folder NEW_LEVEL\n"
+              << "  update /path/to/file_or_folder         (increment level by 1)\n"
               << "  open /path/to/file\n"
               << "  check\n";
 }
@@ -120,10 +160,31 @@ int main(int argc, char* argv[]) {
     }
 
     std::string cmd = argv[1];
-    if (cmd == "create" && argc == 5) {
-        createEntry(argv[2], std::stoi(argv[3]), argv[4]);
-    } else if (cmd == "update" && argc == 4) {
-        updateLevel(argv[2], std::stoi(argv[3]));
+    if (cmd == "create" && (argc == 5 || argc == 4 || argc == 3)) {
+        std::string date, path;
+        int level;
+        if (argc == 5) {
+            date = argv[2];
+            level = std::stoi(argv[3]);
+            path = argv[4];
+        } else if (argc == 4) {
+            date = getTodayDate();
+            level = std::stoi(argv[2]);
+            path = argv[3];
+        } else { // argc == 3
+            date = getTodayDate();
+            level = 0;
+            path = argv[2];
+        }
+        createEntry(date, level, path);
+    } else if (cmd == "update" && (argc == 3 || argc == 4)) {
+        std::string path = argv[2];
+        if (argc == 4) {
+            int newLevel = std::stoi(argv[3]);
+            updateLevel(path, newLevel);
+        } else {
+            updateLevel(path, std::nullopt);
+        }
     } else if (cmd == "open" && argc == 3) {
         openInExplorer(argv[2]);
     } else if (cmd == "check") {

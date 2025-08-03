@@ -76,11 +76,14 @@ A file management utility that organizes files with date-based tracking and leve
 #### Usage
 
 ```bash
-# Create a new file entry
-./file_manager create YYYY-MM-DD LEVEL /path/to/file
+# Create a new file or folder entry
+./file_manager create YYYY-MM-DD LEVEL /path/to/file_or_folder
+./file_manager create LEVEL /path/to/file_or_folder         # date = today
+./file_manager create /path/to/file_or_folder               # date = today, level = 0
 
-# Update a file's level
-./file_manager update /path/to/file NEW_LEVEL
+# Update a file or folder's level
+./file_manager update /path/to/file_or_folder NEW_LEVEL
+./file_manager update /path/to/file_or_folder               # increment level by 1
 
 # Open a file in system explorer
 ./file_manager open /path/to/file
