@@ -89,9 +89,9 @@ void updateLevel(const std::string& path, std::optional<int> newLevelOpt) {
     auto entries = loadEntries();
     bool found = false;
     std::vector<std::string> targets;
+
     if (fs::is_directory(path)) {
-        // Collect all file paths in the directory (non-recursive)
-        for (const auto& entry : fs::directory_iterator(path)) {
+        for (const auto& entry : fs::recursive_directory_iterator(path)) {
             if (fs::is_regular_file(entry.path())) {
                 targets.push_back(entry.path().string());
             }
@@ -99,6 +99,7 @@ void updateLevel(const std::string& path, std::optional<int> newLevelOpt) {
     } else {
         targets.push_back(path);
     }
+
     for (const auto& tpath : targets) {
         for (auto& e : entries) {
             if (e.path == tpath) {
@@ -131,6 +132,7 @@ void openInExplorer(const std::string& path) {
 void checkAndOpen() {
     auto entries = loadEntries();
     std::string today = getTodayDate();
+    std::vector<Entry> newEntries;
     for (const auto& e : entries) {
         int limit = std::pow(2, e.level);
         if (daysBetween(e.date, today) >= limit) {
@@ -139,6 +141,13 @@ void checkAndOpen() {
             std::cout << "Opening folder: " << dir << "\n";
             openInExplorer(dir.string());
         }
+        if (e.level <= 3) {
+            newEntries.push_back(e);
+        }
+    }
+    if (newEntries.size() != entries.size()) {
+        saveEntries(newEntries);
+        std::cout << "Entries with level > 3 were removed.\n";
     }
 }
 
