@@ -6,12 +6,11 @@
 
 namespace fs = std::filesystem;
 
-// Recursively collect all file relative paths in a folder
+// Recursively collect all file names in a folder
 void collectFiles(const fs::path& root, std::unordered_set<std::string>& files) {
     for (const auto& entry : fs::recursive_directory_iterator(root)) {
         if (fs::is_regular_file(entry.path())) {
-            // Store relative path from root
-            files.insert(fs::relative(entry.path(), root).string());
+            files.insert(entry.path().filename().string());
         }
     }
 }
@@ -40,8 +39,8 @@ int main(int argc, char* argv[]) {
     int removed = 0;
     for (const auto& entry : fs::recursive_directory_iterator(folderB)) {
         if (fs::is_regular_file(entry.path())) {
-            std::string relPath = fs::relative(entry.path(), folderB).string();
-            if (filesA.count(relPath)) {
+            std::string fname = entry.path().filename().string();
+            if (filesA.count(fname)) {
                 std::cout << "Removing: " << entry.path() << "\n";
                 moveToTrash(entry.path());
                 ++removed;
