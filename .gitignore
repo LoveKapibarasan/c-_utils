@@ -1,10 +1,7 @@
 SOL/
 **.sql
 setting.json
-entries.txt
-Evaluation/
-**.kifu
-**.kif
+
 
 ### AL ###
 #Template for AL projects for Dynamics 365 Business Central
